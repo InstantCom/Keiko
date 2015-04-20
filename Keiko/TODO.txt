@@ -1,0 +1,8 @@
+Keiko TODO list:
+
+- lower the limit of number of torrents in LRU cache
+- during boot and loading state, delete all torrents which doesn't have any piece older than X days (such job can be called once a day)
+- take couple of days off
+- rewrite sniffer (alternatively through fetch from peer dictionary reconstruct .torrents)
+- fix monthly graphs
+

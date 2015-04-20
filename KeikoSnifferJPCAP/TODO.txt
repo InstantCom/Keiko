@@ -1,0 +1,4 @@
+- lud site za scrape s oko 900 trackera. http://www.torrentking.org/
+  nakon toga bi jedino rucno pod tracker trebalo upisivati one koji nemaju standardni tracker 
+  (inferno.demonoid.com nije standardan, tracker.somesite.com je), problem je kako saznati kad
+  nemamo access

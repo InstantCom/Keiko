@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<project name="KeikoSniffer" default="all" basedir=".">
+
+	<property name="project.name" value="keiko-sniffer" />
+	<property name="project.version" value="0.3.4" />
+	<property name="deps.dir" value="../ServerSideDeps" />
+	<property file="depend.properties" />
+	
+	<fileset id="standalone.libs" dir="${deps.dir}">
+		<include name="commons-codec-${commons-codec.version}/lib/*.jar" />
+		<include name="commons-collections-${commons-collections.version}/lib/*.jar" />
+		<include name="commons-io-${commons-io.version}/lib/*.jar" />
+		<include name="commons-lang-${commons-lang.version}/lib/*.jar" />
+        <include name="commons-logging-${commons-logging.version}/lib/*.jar" />
+		<include name="cssparser-${cssparser.version}/lib/*.jar" />
+		<include name="htmlunit-${htmlunit.version}/lib/*.jar" />
+		<include name="httpcore-${httpcore.version}/lib/*.jar" />
+        <include name="jpcap-${jpcap.version}/lib/*.jar" />
+		<include name="log4j-${log4j.version}/lib/*.jar" />
+		<include name="nekohtml-${nekohtml.version}/lib/*.jar" />
+		<include name="sac-${sac.version}/lib/*.jar" />
+        <include name="wrapper-${wrapper.version}/lib/*.jar" />
+		<include name="xerces-${xerces.version}/lib/*.jar" />
+	</fileset>
+
+    <fileset id="standalone.libs.licenses" dir="${deps.dir}">
+    	<include name="commons-codec-${commons-codec.version}/license/*.*" />
+        <include name="commons-collections-${commons-collections.version}/license/*.*" />
+        <include name="commons-io-${commons-io.version}/license/*.*" />
+        <include name="commons-lang-${commons-lang.version}/license/*.*" />
+        <include name="commons-logging-${commons-logging.version}/license/*.*" />
+        <include name="cssparser-${cssparser.version}/license/*.*" />
+        <include name="htmlunit-${htmlunit.version}/license/*.*" />
+   		<include name="httpcore-${httpcore.version}/license/*.*" />
+        <include name="jpcap-${jpcap.version}/license/*.*" />
+        <include name="log4j-${log4j.version}/license/*.*" />
+        <include name="nekohtml-${nekohtml.version}/license/*.*" />
+        <include name="sac-${sac.version}/license/*.*" />
+        <include name="wrapper-${wrapper.version}/license/*.*" />
+        <include name="xerces-${xerces.version}/license/*.*" />
+    </fileset>
+
+	<fileset id="keikosniffer.lib" dir="builds/jar">
+		<include name="*.jar" />
+	</fileset>
+
+	<path id="compile.classpath">
+		<fileset refid="standalone.libs" />
+	</path>
+
+	<target name="clean" description="Removes all generated (compiled) files.">
+		<delete dir="builds" />
+	</target>
+
+	<target name="compile" depends="clean" description="Compiles all sources">
+		<mkdir dir="builds/classes" />
+		<javac srcdir="src/java" destdir="builds/classes" classpathref="compile.classpath" 
+			source="5" target="${target.java.version}" debug="off" />
+	</target>
+
+	<target name="jar" depends="compile" description="Builds jar(s)">
+		<mkdir dir="builds/jar" />
+
+		<jar jarfile="builds/jar/${project.name}.jar">
+			<fileset dir="builds/classes" />
+			<fileset dir="src/java">
+				<exclude name="**/*.java" />
+				<exclude name="**/*_devel.*" />
+			</fileset>
+		</jar>
+	</target>
+
+    <target name="dist_linux32" depends="jar" description="Builds Linux x86 distribution">
+        <property name="dist.linux32.dir" value="builds/dist/linux86_32" />
+
+        <copy todir="${dist.linux32.dir}/license" flatten="true">
+            <fileset refid="standalone.libs.licenses" />
+        </copy>
+        <copy todir="${dist.linux32.dir}/conf">
+        	<fileset dir="src/conf" />
+        </copy>
+        <copy tofile="${dist.linux32.dir}/init/keiko-sniffer" file="src/bin/keiko-sniffer.sh" />
+        <copy tofile="${dist.linux32.dir}/init/manage-log-files" file="src/bin/manage-log-files.sh" />
+        <copy todir="${dist.linux32.dir}/lib">
+            <fileset dir="${deps.dir}/wrapper-${wrapper.version}/bin/linux-x86-32" excludes="testwrapper" />
+        </copy>
+        <copy todir="${dist.linux32.dir}/lib" file="builds/jar/${project.name}.jar" />
+        <copy todir="${dist.linux32.dir}/lib" flatten="yes">
+            <fileset refid="standalone.libs" />
+        </copy>
+        <copy todir="${dist.linux32.dir}/log">
+            <fileset dir="src/log" />
+        </copy>
+        <copy todir="${dist.linux32.dir}/run">
+            <fileset dir="src/run" />
+        </copy>
+
+        <filter token="project.name" value="${project.name}" />
+        <filter token="project.version" value="${project.version}" />
+        <copy tofile="${dist.linux32.dir}/doc/readme.txt" file="src/doc/template-readme.txt" filtering="true" />
+        <copy todir="${dist.linux32.dir}/doc">
+            <fileset dir="src/doc" excludes="template*.*" />
+        </copy>
+        
+        <fixcrlf srcdir="${dist.linux32.dir}/conf" eol="unix" />
+        <fixcrlf srcdir="${dist.linux32.dir}/init" eol="unix" />
+        <fixcrlf srcdir="${dist.linux32.dir}/doc" eol="unix" />
+        <fixcrlf srcdir="${dist.linux32.dir}/license" eol="unix" />
+        <fixcrlf srcdir="${dist.linux32.dir}/log" eol="unix" />
+        <fixcrlf srcdir="${dist.linux32.dir}/run" eol="unix" />
+        
+        <tar destfile="builds/${project.name}-linux86_32-${project.version}.tar.gz" compression="gzip">
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/conf" prefix="/opt/keiko-sniffer/conf" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/doc" prefix="/opt/keiko-sniffer/doc" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/init" prefix="/opt/keiko-sniffer/init" filemode="755" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/lib/" prefix="/opt/keiko-sniffer/lib" excludes="wrapper" />
+            <tarfileset preserveLeadingSlashes="true" file="${dist.linux32.dir}/lib/wrapper" prefix="/opt/keiko-sniffer/lib" filemode="755" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/license" prefix="/opt/keiko-sniffer/license" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/log/" prefix="/opt/keiko-sniffer/log" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux32.dir}/run/" prefix="/opt/keiko-sniffer/run" filemode="600" />
+        </tar>
+    </target>
+
+    <target name="dist_linux64" depends="jar" description="Builds Linux x64 distribution">
+        <property name="dist.linux64.dir" value="builds/dist/linux86_64" />
+
+        <copy todir="${dist.linux64.dir}/license" flatten="true">
+            <fileset refid="standalone.libs.licenses" />
+        </copy>
+        <copy todir="${dist.linux64.dir}/conf">
+        	<fileset dir="src/conf" />
+        </copy>
+        <copy tofile="${dist.linux64.dir}/init/keiko-sniffer" file="src/bin/keiko-sniffer.sh" />
+        <copy tofile="${dist.linux64.dir}/init/manage-log-files" file="src/bin/manage-log-files.sh" />
+        <copy todir="${dist.linux64.dir}/lib">
+            <fileset dir="${deps.dir}/wrapper-${wrapper.version}/bin/linux-x86-64" excludes="testwrapper" />
+        </copy>
+        <copy todir="${dist.linux64.dir}/lib" file="builds/jar/${project.name}.jar" />
+        <copy todir="${dist.linux64.dir}/lib" flatten="yes">
+            <fileset refid="standalone.libs" />
+        </copy>
+        <copy todir="${dist.linux64.dir}/log">
+            <fileset dir="src/log" />
+        </copy>
+        <copy todir="${dist.linux64.dir}/run">
+            <fileset dir="src/run" />
+        </copy>
+
+        <filter token="project.name" value="${project.name}" />
+        <filter token="project.version" value="${project.version}" />
+        <copy tofile="${dist.linux64.dir}/doc/readme.txt" file="src/doc/template-readme.txt" filtering="true" />
+        <copy todir="${dist.linux64.dir}/doc">
+            <fileset dir="src/doc" excludes="template*.*" />
+        </copy>
+        
+        <fixcrlf srcdir="${dist.linux64.dir}/conf" eol="unix" />
+        <fixcrlf srcdir="${dist.linux64.dir}/init" eol="unix" />
+        <fixcrlf srcdir="${dist.linux64.dir}/doc" eol="unix" />
+        <fixcrlf srcdir="${dist.linux64.dir}/license" eol="unix" />
+        <fixcrlf srcdir="${dist.linux64.dir}/log" eol="unix" />
+        <fixcrlf srcdir="${dist.linux64.dir}/run" eol="unix" />
+        
+        <tar destfile="builds/${project.name}-linux86_64-${project.version}.tar.gz" compression="gzip">
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/conf" prefix="/opt/keiko-sniffer/conf" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/doc" prefix="/opt/keiko-sniffer/doc" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/init" prefix="/opt/keiko-sniffer/init" filemode="755" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/lib/" prefix="/opt/keiko-sniffer/lib" excludes="wrapper" />
+            <tarfileset preserveLeadingSlashes="true" file="${dist.linux64.dir}/lib/wrapper" prefix="/opt/keiko-sniffer/lib" filemode="755" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/license" prefix="/opt/keiko-sniffer/license" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/log/" prefix="/opt/keiko-sniffer/log" filemode="600" />
+            <tarfileset preserveLeadingSlashes="true" dir="${dist.linux64.dir}/run/" prefix="/opt/keiko-sniffer/run" filemode="600" />
+        </tar>
+    </target>
+
+	<target name="javadoc" description="Creates Javadoc documentation">
+		<mkdir dir="builds/docs/api" />
+		<javadoc source="1.5" destdir="builds/docs/api" author="true" additionalparam="-breakiterator" classpathref="compile.classpath">
+			<packageset dir="src/java">
+				<include name="net/**" />
+			</packageset>
+		</javadoc>
+	</target>
+	
+	<target name="all" depends="dist_linux32, dist_linux64" description="Builds all" />
+
+</project>
